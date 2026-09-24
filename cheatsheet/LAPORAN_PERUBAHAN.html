@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Perubahan - Fitur Halaman Products</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 40px;
+            color: #000;
+        }
+        h1 {
+            font-size: 18pt;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 14pt;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        h3 {
+            font-size: 12pt;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 11pt;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 10pt;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10pt;
+        }
+        .highlight {
+            background-color: #ffffcc;
+            padding: 2px 4px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 11pt;
+            color: #555;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>LAPORAN PERUBAHAN KODE</h1>
+<p class="subtitle">Fitur Halaman Products &mdash; Laravel + Inertia.js + Vue</p>
+
+<h2>1. Tujuan</h2>
+<p>Membuat halaman untuk menampilkan tabel data <strong>products</strong> menggunakan stack teknologi Laravel (backend) dan Vue.js (frontend) dengan Inertia.js sebagai bridge di antara keduanya.</p>
+
+<h2>2. Files yang Diubah</h2>
+<table>
+    <tr>
+        <th style="width:5%">No</th>
+        <th style="width:45%">File</th>
+        <th style="width:10%">Status</th>
+        <th style="width:40%">Penjelasan</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td><code>app/Http/Controllers/ProductController.php</code></td>
+        <td>Diubah</td>
+        <td>Dari class kosong menjadi memiliki method <code>index()</code></td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td><code>routes/web.php</code></td>
+        <td>Diubah</td>
+        <td>Ditambah route <code>GET /products</code></td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td><code>resources/js/pages/Products.vue</code></td>
+        <td>Baru</td>
+        <td>Halaman Vue untuk menampilkan tabel products</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td><code>resources/js/components/AppSidebar.vue</code></td>
+        <td>Diubah</td>
+        <td>Ditambah menu "Products" di sidebar navigation</td>
+    </tr>
+</table>
+
+<h2>3. Detail Perubahan</h2>
+
+<h3>3.1 ProductController.php</h3>
+<p><strong>Lokasi:</strong> <code>app/Http/Controllers/ProductController.php</code></p>
+<p><strong>Yang diubah:</strong> Class yang sebelumnya kosong ditambah method <code>index()</code>.</p>
+
+<p><strong>Sebelum:</strong></p>
+<pre><code>class ProductController extends Controller
+{
+    //
+}</code></pre>
+
+<p><strong>Sesudah:</strong></p>
+<pre><code>use App\Models\Product;
+use Inertia\Inertia;
+
+class ProductController extends Controller
+{
+    public function index()
+    {
+        $products = Product::latest()->get();
+
+        return Inertia::render('Products', [
+            'products' => $products,
+        ]);
+    }
+}</code></pre>
+
+<p><strong>Penjelasan:</strong></p>
+<ul>
+    <li><code>Product::latest()->get()</code> &mdash; Mengambil semua data dari tabel products, diurutkan dari yang terbaru.</li>
+    <li><code>Inertia::render('Products', [...])</code> &mdash; Merender Vue component <code>Products.vue</code> dan mengirim data products sebagai props.</li>
+</ul>
+
+<h3>3.2 routes/web.php</h3>
+<p><strong>Lokasi:</strong> <code>routes/web.php</code></p>
+<p><strong>Yang diubah:</strong> Ditambah import <code>ProductController</code> dan route baru <code>GET /products</code>.</p>
+
+<p><strong>Sebelum:</strong></p>
+<pre><code>Route::inertia('/', 'Welcome')->name('home');
+
+Route::middleware(['auth', 'verified'])-&gt;group(function () {
+    Route::inertia('dashboard', 'Dashboard')-&gt;name('dashboard');
+});</code></pre>
+
+<p><strong>Sesudah:</strong></p>
+<pre><code>use App\Http\Controllers\ProductController;
+
+Route::inertia('/', 'Welcome')-&gt;name('home');
+Route::get('products', [ProductController::class, 'index'])-&gt;name('products');
+
+Route::middleware(['auth', 'verified'])-&gt;group(function () {
+    Route::inertia('dashboard', 'Dashboard')-&gt;name('dashboard');
+});</code></pre>
+
+<p><strong>Penjelasan:</strong></p>
+<ul>
+    <li>Route <code>/products</code> ditempatkan <strong>di luar</strong> middleware auth, sehingga bisa diakses tanpa login.</li>
+    <li>Route mengarah ke <code>ProductController</code> method <code>index</code>.</li>
+</ul>
+
+<h3>3.3 resources/js/pages/Products.vue (File Baru)</h3>
+<p><strong>Lokasi:</strong> <code>resources/js/pages/Products.vue</code></p>
+<p><strong>Yang diubah:</strong> File baru dibuat sepenuhnya.</p>
+
+<p><strong>Kode lengkap:</strong></p>
+<pre><code>&lt;script setup lang="ts"&gt;
+import { Head } from '@inertiajs/vue3';
+
+interface Product {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    price: number;
+    discount_price: number | null;
+    stock: number;
+    sku: string | null;
+    image: string | null;
+    is_active: boolean;
+    created_at: string;
+}
+
+defineProps&lt;{
+    products: Product[];
+}&gt;();
+
+function formatPrice(price: number): string {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+    }).format(price);
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;Head title="Products" /&gt;
+    &lt;div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"&gt;
+        &lt;h1 class="text-2xl font-bold"&gt;Products&lt;/h1&gt;
+        &lt;table class="w-full text-left text-sm"&gt;
+            &lt;thead&gt;
+                &lt;tr&gt;
+                    &lt;th&gt;Name&lt;/th&gt;
+                    &lt;th&gt;Price&lt;/th&gt;
+                    &lt;th&gt;Discount&lt;/th&gt;
+                    &lt;th&gt;Stock&lt;/th&gt;
+                    &lt;th&gt;SKU&lt;/th&gt;
+                    &lt;th&gt;Status&lt;/th&gt;
+                &lt;/tr&gt;
+            &lt;/thead&gt;
+            &lt;tbody&gt;
+                &lt;tr v-for="product in products" :key="product.id"&gt;
+                    &lt;td&gt;{{ product.name }}&lt;/td&gt;
+                    &lt;td&gt;{{ formatPrice(product.price) }}&lt;/td&gt;
+                    &lt;td&gt;{{ product.discount_price ? formatPrice(product.discount_price) : '-' }}&lt;/td&gt;
+                    &lt;td&gt;{{ product.stock }}&lt;/td&gt;
+                    &lt;td&gt;{{ product.sku || '-' }}&lt;/td&gt;
+                    &lt;td&gt;{{ product.is_active ? 'Active' : 'Inactive' }}&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/tbody&gt;
+        &lt;/table&gt;
+    &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+
+<p><strong>Penjelasan:</strong></p>
+<ul>
+    <li><code>interface Product</code> &mdash; Mendefinisikan tipe data products sesuai struktur database.</li>
+    <li><code>defineProps</code> &mdash; Menerima data products dari backend Laravel.</li>
+    <li><code>formatPrice()</code> &mdash; Fungsi untuk format mata uang Rupiah (IDR).</li>
+    <li>Tabel dengan 6 kolom: Name, Price, Discount, Stock, SKU, Status.</li>
+    <li>Badge warna: hijau (Active), merah (Inactive).</li>
+</ul>
+
+<h3>3.4 AppSidebar.vue</h3>
+<p><strong>Lokasi:</strong> <code>resources/js/components/AppSidebar.vue</code></p>
+<p><strong>Yang diubah:</strong> Ditambah icon <code>ShoppingBag</code> dan menu "Products" di sidebar.</p>
+
+<p><strong>Sebelum:</strong></p>
+<pre><code>import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+
+const mainNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+];</code></pre>
+
+<p><strong>Sesudah:</strong></p>
+<pre><code>import { BookOpen, FolderGit2, LayoutGrid, ShoppingBag } from '@lucide/vue';
+
+const mainNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Products',
+        href: '/products',
+        icon: ShoppingBag,
+    },
+];</code></pre>
+
+<h2>4. Konsep yang Digunakan</h2>
+<table>
+    <tr>
+        <th style="width:25%">Konsep</th>
+        <th>Penjelasan</th>
+    </tr>
+    <tr>
+        <td><strong>Inertia.js</strong></td>
+        <td>Bridge antara Laravel backend dan Vue frontend. Memungkinkan SPA (Single Page Application) tanpa perlu membuat API terpisah.</td>
+    </tr>
+    <tr>
+        <td><strong>Wayfinder</strong></td>
+        <td>Laravel Vite plugin untuk type-safe route generation di TypeScript, sehingga route name otomatis ter-generate sebagai function.</td>
+    </tr>
+    <tr>
+        <td><strong>Controller</strong></td>
+        <td>Class PHP yang menangani request HTTP dan mengirim response (data + view).</td>
+    </tr>
+    <tr>
+        <td><strong>Vue Component</strong></td>
+        <td>File <code>.vue</code> untuk frontend UI menggunakan Composition API (<code>&lt;script setup&gt;</code>).</td>
+    </tr>
+    <tr>
+        <td><strong>Props</strong></td>
+        <td>Data yang dikirim dari parent (backend Laravel) ke child component (Vue) melalui Inertia.</td>
+    </tr>
+    <tr>
+        <td><strong>Middleware</strong></td>
+        <td>Mekanisme Laravel untuk memfilter request, contoh: <code>auth</code> middleware hanya mengizinkan user yang sudah login.</td>
+    </tr>
+    <tr>
+        <td><strong>Eloquent Model</strong></td>
+        <td>ORM Laravel untuk berinteraksi dengan database secara OO. <code>Product::latest()->get()</code> mengambil semua data.</td>
+    </tr>
+</table>
+
+<h2>5. Cara Menjalankan</h2>
+<ol>
+    <li>Pastikan <strong>MySQL sudah running</strong> (XAMPP Control Panel &rarr; Start MySQL)</li>
+    <li>Buka terminal dan jalankan:
+        <pre><code>cd laravels
+php artisan migrate</code></pre>
+    </li>
+    <li>(Opsional) Seed data products via tinker:
+        <pre><code>php artisan tinker</code></pre>
+        Lalu paste:
+        <pre><code>App\Models\Product::create(['name' =&gt; 'Laptop', 'slug' =&gt; 'laptop', 'price' =&gt; 10000000, 'stock' =&gt; 50]);
+App\Models\Product::create(['name' =&gt; 'Mouse', 'slug' =&gt; 'mouse', 'price' =&gt; 150000, 'stock' =&gt; 100]);</code></pre>
+    </li>
+    <li>Jalankan dev server:
+        <pre><code>php artisan serve</code></pre>
+    </li>
+    <li>Buka browser: <code>http://localhost:8000/products</code></li>
+</ol>
+
+<h2>6. Catatan Penting</h2>
+<ol>
+    <li><strong>Kenapa edit <code>index.blade.php</code> tidak berpengaruh?</strong><br>
+        Project ini menggunakan <strong>Inertia.js + Vue</strong>, bukan Blade template biasa. Route <code>/</code> menampilkan <code>resources/js/pages/Welcome.vue</code>, bukan file Blade. Jadi halaman baru harus dibuat sebagai Vue component di <code>resources/js/pages/</code>.</li>
+    <li><strong>Kenapa awalnya harus login?</strong><br>
+        Route <code>/products</code> awalnya ditempatkan di dalam middleware <code>auth</code> group. Solusi: memindahkan route ke luar middleware auth group.</li>
+    <li><strong>Error "Connection refused"?</strong><br>
+        Artinya MySQL belum running. Pastikan MySQL di XAMPP sudah Start. Jika masih error, cek log di <code>C:\xampp\mysql\data\mysql_error.log</code>.</li>
+</ol>
+
+<hr>
+<p style="text-align: center; font-size: 10pt; color: #999;">
+    Laporan ini dibuat untuk tugas Keahlian &mdash; 2026
+</p>
+
+</body>
+</html>
